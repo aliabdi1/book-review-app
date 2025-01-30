@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import BookList from "./BookList";
+import BookDetails from "./BookDetails"; 
 
 function App() {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    axios.get("http://127.0.0.1:5000/")
-      .then((response) => setMessage(response.data.message))
-      .catch((error) => console.log(error));
-  }, []);
-
-  return <h1>{message}</h1>;
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<BookList />} />
+        <Route path="/books/:id" element={<BookDetails />} />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;
