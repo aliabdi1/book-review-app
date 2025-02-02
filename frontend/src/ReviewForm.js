@@ -1,39 +1,75 @@
-import React, { useState } from "react";
+import React from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { Button, Alert } from "react-bootstrap";
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
 
-function ReviewForm({ onReviewSubmit }) {
-  const { id } = useParams();
-  const [content, setContent] = useState("");
-  const [rating, setRating] = useState(5);
+const validationSchema = Yup.object({
+  rating: Yup.number()
+    .min(1, "Rating must be between 1-5")
+    .max(5, "Rating must be between 1-5")
+    .required("Required"),
+  content: Yup.string().required("Review content is required")
+});
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    axios.post("http://127.0.0.1:5000/reviews", { 
-      content, 
-      rating, 
-      book_id: id 
-    })
-      .then((response) => {
-        onReviewSubmit(); 
-        setContent("");
-        setRating(5);
-      })
-      .catch((error) => console.log(error));
-  };
-
+const ReviewForm = ({ bookId, onReviewSubmit }) => {
   return (
-    <form onSubmit={handleSubmit}>
-      <h3>Submit a Review</h3>
-      <label>Rating (1-5):</label>
-      <input type="number" min="1" max="5" value={rating} onChange={(e) => setRating(e.target.value)} required />
-      
-      <label>Review:</label>
-      <textarea value={content} onChange={(e) => setContent(e.target.value)} required />
-      
-      <button type="submit">Submit Review</button>
-    </form>
+    <Formik
+      initialValues={{ rating: 1, content: '' }}
+      validationSchema={validationSchema}
+      onSubmit={(values, { resetForm }) => {
+        axios.post('http://localhost:5003/reviews', {
+          ...values,
+          book_id: bookId,
+          user_id: 1 // Replace with actual user ID
+        })
+        .then(() => {
+          onReviewSubmit();
+          resetForm();
+        })
+        .catch(error => console.error(error));
+      }}
+    >
+      {({ isSubmitting }) => (
+        <Form className="mb-4">
+          <h3>Submit a Review</h3>
+          
+          <div className="mb-3">
+            <label>Rating</label>
+            <Field 
+              as="select" 
+              name="rating" 
+              className="form-select"
+            >
+              {[1, 2, 3, 4, 5].map(num => (
+                <option key={num} value={num}>{num} Stars</option>
+              ))}
+            </Field>
+            <ErrorMessage name="rating" component={Alert} variant="danger" />
+          </div>
+
+          <div className="mb-3">
+            <label>Review</label>
+            <Field 
+              as="textarea" 
+              name="content" 
+              className="form-control" 
+              rows="4"
+            />
+            <ErrorMessage name="content" component={Alert} variant="danger" />
+          </div>
+
+          <Button 
+            type="submit" 
+            variant="primary" 
+            disabled={isSubmitting}
+          >
+            Submit Review
+          </Button>
+        </Form>
+      )}
+    </Formik>
   );
-}
+};
 
 export default ReviewForm;
